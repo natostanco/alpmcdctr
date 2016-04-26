@@ -1,0 +1,25 @@
+services:
+- docker
+script:
+- export SAVE=$PWD cnt="ubumcdctr"
+- docker build -t ${cnt} .
+- sudo ./docker-slim build --continue-after probe --http-probe ${cnt}
+before_deploy:
+- cd
+- wget `curl -s https://api.github.com/repos/appc/docker2aci/releases | grep browser_download_url
+  | head -n 1 | cut -d '"' -f 4` -O d2a.tar.gz
+- tar -zxf d2a.tar.gz && rm d2a.tar.gz && d2a=`ls | grep "docker2aci*"` && d2a=`basename  $d2a`
+  && alias d2a='${PWD}/${d2a}/docker2aci'
+- docker save -o ${cnt}.slim.tar ${cnt}.slim
+- "${PWD}/${d2a}/docker2aci ${cnt}.slim.tar"
+- xz -9 -c ${cnt}.slim.tar > ${cnt}.slim.tar.xz
+deploy:
+  provider: releases
+  api_key:
+    secure: 0WiiC/ysEQWWgISVws40FZ2YONKDUpcjGwZcvek3WECI0Q3BMOx6+JKebIEz4hP+OG4b/iqXz5jx5dQk9PQNH545vO5i4Kt7ckSrgEg0Zq8v92BsCV959f15WoApPR4rXiHxt7WPhEzckazjSRUsnyGTT3SeEHyIh1KWU+xpYooZRRMxMTASLjigvZzt9LtuxGg6GjBivU77lVVD9GPNntfmFUH5qeyrFRBMKGZHcP+4j108lNE8EO7/bNd3aZEj3XwKxuNE3RDS0tX495SkfqXAewYMJ2v01WyApodOrlPzTkuumMvHnKr3DOLhdHZK4nhDf3QdMTm6o5kqEGN5n+1gF7HW37EzHkGoshQ5VMcu4tgmBTIIKzPCY0YwvdQFUpz/XmrjmDP7DYY539vhl3Y5wnUqJJXf1eouhzTQ2tWsrqhMz0h8oBaCfBBFHO2IuJNHiSF7XnHjKnoZDLmFHXxuhXd8fKp7MhqEujXqk/+ovNwQ2UMFSn9St70KQj6jx9HFSj3QhomunFE02uzI3O0PjKezqWEETCMztXpvDiX+UGYJStJ/jDtOnuxPLc8U6mqESN9/2k0W+aY1nggwcALoRkidg2t6dZE6MEZhuaC0x+q2xv9dnRYhUB20wx8sY+Ok+W51A9uzWrwDb6Q3O0n+TiVOaNObQTpGHjVpRpQ=
+  file:
+  - ${cnt}.slim.tar.xz 
+  - ${cnt}.slim-latest.aci 
+  skip_cleanup: true
+  on:
+    tags: true

@@ -1,7 +1,7 @@
 services:
 - docker
 script:
-- export SAVE=$PWD cnt="ubumcdctr"
+- export SAVE=$PWD cnt="alpmcdctr"
 - docker build -t ${cnt} .
 #- sudo ./docker-slim build --continue-after probe --http-probe ${cnt}
 before_deploy:

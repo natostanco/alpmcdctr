@@ -1,9 +1,8 @@
 services:
 - docker
 script:
-- export SAVE=$PWD cnt="ubumcdctr"
+- export SAVE=$PWD cnt="alpmcdctr" slim=""
 - docker build -t ${cnt} .
-#- sudo ./docker-slim build --continue-after probe --http-probe ${cnt}
 before_deploy:
 - cd
 - wget `curl -s https://api.github.com/repos/appc/docker2aci/releases | grep browser_download_url
@@ -13,13 +12,21 @@ before_deploy:
 - docker save -o ${cnt}.tar ${cnt}
 - "${PWD}/${d2a}/docker2aci ${cnt}.tar"
 - xz -9 -c ${cnt}.tar > ${cnt}.tar.xz
+- docker login -e $QUAYE -u $QUAYL -p $QUAYP  quay.io
+- docker tag ${cnt}${slim} quay.io/natostanco/$cnt:$TRAVIS_TAG
+- docker push quay.io/natostanco/$cnt:$TRAVIS_TAG
 deploy:
   provider: releases
   api_key:
     secure: 0WiiC/ysEQWWgISVws40FZ2YONKDUpcjGwZcvek3WECI0Q3BMOx6+JKebIEz4hP+OG4b/iqXz5jx5dQk9PQNH545vO5i4Kt7ckSrgEg0Zq8v92BsCV959f15WoApPR4rXiHxt7WPhEzckazjSRUsnyGTT3SeEHyIh1KWU+xpYooZRRMxMTASLjigvZzt9LtuxGg6GjBivU77lVVD9GPNntfmFUH5qeyrFRBMKGZHcP+4j108lNE8EO7/bNd3aZEj3XwKxuNE3RDS0tX495SkfqXAewYMJ2v01WyApodOrlPzTkuumMvHnKr3DOLhdHZK4nhDf3QdMTm6o5kqEGN5n+1gF7HW37EzHkGoshQ5VMcu4tgmBTIIKzPCY0YwvdQFUpz/XmrjmDP7DYY539vhl3Y5wnUqJJXf1eouhzTQ2tWsrqhMz0h8oBaCfBBFHO2IuJNHiSF7XnHjKnoZDLmFHXxuhXd8fKp7MhqEujXqk/+ovNwQ2UMFSn9St70KQj6jx9HFSj3QhomunFE02uzI3O0PjKezqWEETCMztXpvDiX+UGYJStJ/jDtOnuxPLc8U6mqESN9/2k0W+aY1nggwcALoRkidg2t6dZE6MEZhuaC0x+q2xv9dnRYhUB20wx8sY+Ok+W51A9uzWrwDb6Q3O0n+TiVOaNObQTpGHjVpRpQ=
   file:
-  - ${cnt}.tar.xz 
-  - ${cnt}-latest.aci 
+  - "${cnt}.tar.xz"
+  - "${cnt}-latest.aci"
   skip_cleanup: true
   on:
     tags: true
+env:
+  global:
+  - secure: fm5+S1hEP2g1uIoNGDJrmmgeLd5P8AEFp3W5M+ziUIKAmH0jx9glGiGSAAyX4EWLFkVmFOVtrPUal6HaJ4ITs6hwIeuG8KczkezggxFeODHFebWwV6UBM4iv1mivYOmzFpxqqXwBggOkU1GblMhkKnvk6DS1XWTPTI5+11MuG7LzxC+qVOAPFD4wdtbp5yd7ZzcnHh+r/9pCJc4DxOeqCaWLUIICCZFtWZ3HTPQYlgCRgeJFGBHg0XrsxJv4JwfvLalgE0ZI2KbCs3c1mgYU9AGqppByCfPfJuQZ4tjbYeTuBpa9bwN5a4DKUiFVsL77mDCDwUIyOWYKPoaDj3wyB2cMXIICbB8F3/zWLL3dm2kUkEXu1otz3DVv+BW/n4puabT9sKucZIy6NVkXa27w4Xf//NVoR6RgpzaageL7asgZWTodwbMD7UfYrbeAojN87ZddX6ZxGNkBMc/O4HNaz7aXw0AOcEM5SxZy9rk6EcSiXavKse1cxB4lzf/NRseg290kmujPXfohgvKMZQkeRHwobDUk5RmoNDLHULueqHHDji7chIFVVBrImVsqLsABbY0X/sqzxFaQRV5X7pQzqaYRAtpXiBZfob5qrKhTzZ9nnm1OzCY5b8ahMDLhA/c1ix+2rkNcW9dT9r2QbrT2cB60r8XNkrNUbFyaErPFRCg=
+  - secure: kZIL5b544oO8c2AdW5jZVaK+JSvn4E+/bXThGa64BrqyOyU3WsB5ec8IzKxR/5NQZugqarzUa9fOwa96SLpKFXPVykjWqs8M/NsZT+OhdAtpLE2Qg+ldLyUgGh600VhsZjFAbi/9qUZzXubx/k1AkyAxaacB22eAh6pND9u4W4oY4q/Rr8msF/TRQKadTtYxFqRHwECQ8VxXTvZHzPkl3kuymUCdzATMwF6XonKDoRlPzNoVPMwOVarwTP6hTPYYISjoueay8mCK+a6/7SA+LRS2cgu4QWo1L5KlfzDnYv8pizzlBpSbHaaZkN3EquNX9H/S3+Yzvyr6yGlGMXTk2gJY8OGkRtea1ivgeYYEstFfaZ4x2oEQWrQ/oSRsru5CBXMZo26LXN+fBZjPSn5UZKf8xWMSxYlKRU6RT/0bsgvF2Lb6pHWFBirBOpER5zDeH7rIjIHaCMEylsvDCmEZnR8SpNgGIataZhjlfRk9WjjAlaS9nXDdTGrXMMf8oMmd/1vF0F8cqdOF0u2hnKFvArg3E0cN34t6Dj/BCKWJJgeuNEBg2PUG9Kxkuq0wCaFCAeEgNDb2y30m11ZFmvcTq46RBG1XJSXlErmXwJct9NAkwf3HVczeb2sUhX0Y3/EiTGKqz7eFObbtwKFDOKHSFrdUfbd2V8/aHyx5zhX/jq4=
+  - secure: oHnHSRBIBvLDE3W0w7uzct9uGYiK4N1lts8QE3mDSRTRuAlzXFPKd9yWiqZmEBaFpHTicDa5iOYIw70OKIdPQ/BRXKMrYdq0j+9AwWtF+fs4L00jCS+524MFRzghuM1u8j2RIX8T4hDVhQ0cWXnXouG+dTrxS9wXk1vFptaQfNAr06XLL9DNZIySV2Yx5YIYNQFDSVDN9gDSrbQdNhCMbtHSIJd6sHMDG20q421Vklmk0+BPUyTKmZFWCQBspceHTFBxscG7zkwBfoioaxsEEbNN0TmfdG2BpqFB/4S6psznhNZhIB2rxvslexUTd7tKyetm/YB3m+Ou09xQoqA76LKRWv+SWdczmbhTUrd2RLoh8cWcVFkaL0wvSz7w3HpF3T/EhsLgHe0WYdkGdYE68b8SH3mZxliOKfAs2IwJTpkTWJsSzMy0RpmL1lnVx7LxBYXJBmN8NFH60QLNnv2aUFerGhTCwvVhNVLmt2MDYL1hWn5Ij5wovq0hMeDZqKFRwJW1BQNQd2cwk/jPdcJXQNuOzAV/YJAZ3dhcqTZZYvq47sRfNUVKCablNBAxurtR1ycmkQwhFAOzv012lQAbF0/Teu1vVeCUtgQWoMN0OCuF/utQGPty+QiqhwO3Mw7fixYtFneJh3P91/YuXKqQRQ1inR9LNQe2ZK/zuYLSNqk=
